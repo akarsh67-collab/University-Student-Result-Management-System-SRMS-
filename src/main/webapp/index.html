@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>University SRMS — Student Result Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --card:     #1f2330;
+    --border:   #2a2f40;
+    --text:     #e8eaf0;
+    --muted:    #8b90a0;
+    --accent:   #4f7cff;
+    --accent2:  #7c5cff;
+    --success:  #34d399;
+    --warning:  #fbbf24;
+    --danger:   #f87171;
+    --info:     #60a5fa;
+    --font:     'DM Sans', sans-serif;
+    --mono:     'DM Mono', monospace;
+    --radius:   10px;
+    --radius-lg:16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    width: 240px; min-height: 100vh; background: var(--surface);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  }
+  .logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo-badge { display: inline-block; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; margin-bottom: 6px; }
+  .logo h1 { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .logo p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  nav { flex: 1; padding: 12px 10px; }
+  .nav-section { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1px; padding: 12px 10px 6px; text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border-radius: var(--radius); cursor: pointer; font-size: 13.5px;
+    color: var(--muted); transition: all 0.15s; margin-bottom: 2px;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--card); color: var(--text); }
+  .nav-item.active { background: rgba(79,124,255,0.15); color: var(--accent); }
+  .nav-item .icon { width: 18px; text-align: center; font-size: 16px; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+  .user-pill { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0; }
+  .user-info p { font-size: 13px; font-weight: 500; }
+  .user-info span { font-size: 11px; color: var(--muted); }
+
+  /* ---- Main ---- */
+  .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar h2 { font-size: 16px; font-weight: 600; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .content { padding: 28px; flex: 1; }
+
+  /* ---- Cards & Grid ---- */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .stat-card.blue::before   { background: var(--accent); }
+  .stat-card.purple::before { background: var(--accent2); }
+  .stat-card.green::before  { background: var(--success); }
+  .stat-card.amber::before  { background: var(--warning); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 600; line-height: 1; }
+  .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .stat-icon  { position: absolute; right: 16px; top: 16px; font-size: 24px; opacity: 0.15; }
+
+  /* ---- Buttons ---- */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font); transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3d6bff; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--surface); }
+  .btn-danger { background: transparent; border: 1px solid rgba(248,113,113,0.3); color: var(--danger); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-success { background: var(--success); color: #0d1117; }
+
+  /* ---- Forms ---- */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-family: var(--font); font-size: 13.5px; padding: 9px 12px;
+    transition: border-color 0.15s; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface); }
+
+  /* ---- Table ---- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th { background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ---- Badges ---- */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .badge-O  { background: rgba(52,211,153,0.15);  color: var(--success); }
+  .badge-A  { background: rgba(96,165,250,0.15);  color: var(--info); }
+  .badge-B  { background: rgba(124,92,255,0.15);  color: var(--accent2); }
+  .badge-C  { background: rgba(251,191,36,0.15);  color: var(--warning); }
+  .badge-F  { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .badge-pass { background: rgba(52,211,153,0.15); color: var(--success); }
+  .badge-fail { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .badge-active { background: rgba(52,211,153,0.12); color: var(--success); }
+
+  /* ---- Section header ---- */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .section-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* ---- Tabs ---- */
+  .tabs { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: var(--radius); margin-bottom: 20px; width: fit-content; }
+  .tab-btn { padding: 7px 18px; border-radius: 7px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--muted); font-family: var(--font); font-weight: 500; transition: all 0.15s; }
+  .tab-btn.active { background: var(--card); color: var(--text); }
+
+  /* ---- Misc ---- */
+  .page { display: none; }
+  .page.active { display: block; }
+  .row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+  .mono { font-family: var(--mono); }
+  .text-success { color: var(--success); }
+  .text-danger  { color: var(--danger); }
+  .text-muted   { color: var(--muted); }
+  .text-accent  { color: var(--accent); }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; font-size: 13.5px; z-index: 9999; animation: slideIn 0.2s ease; max-width: 340px; }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error   { border-color: var(--danger);  color: var(--danger); }
+  @keyframes slideIn { from { transform: translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+  /* ---- Report Card ---- */
+  .report-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .report-header { background: linear-gradient(135deg, #1a237e 0%, #283593 100%); padding: 28px 32px; color: #fff; }
+  .report-univ { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; }
+  .report-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .report-sub   { font-size: 13px; opacity: 0.8; }
+  .report-body  { padding: 24px 32px; }
+  .report-meta  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin-bottom: 24px; font-size: 13.5px; }
+  .report-meta span { color: var(--muted); }
+  .report-result { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; background: var(--surface); border-radius: var(--radius); padding: 20px; margin-top: 20px; }
+  .rr-item { text-align: center; }
+  .rr-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .rr-value { font-size: 20px; font-weight: 700; }
+  .print-btn { display: none; }
+  @media print { .sidebar, .topbar, .stat-grid, .section-header > .btn, .print-btn { display: none !important; } .main { margin: 0; } .content { padding: 0; } }
+
+  /* ---- Loader ---- */
+  .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-badge">SRMS</div>
+    <h1>University Result Management</h1>
+    <p>Academic Management System</p>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="navigate('dashboard')">
+      <span class="icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="navigate('students')">
+      <span class="icon">🎓</span> Students
+    </button>
+
+    <div class="nav-section">Results</div>
+    <button class="nav-item" onclick="navigate('marks')">
+      <span class="icon">✏️</span> Enter Marks
+    </button>
+    <button class="nav-item" onclick="navigate('results')">
+      <span class="icon">📋</span> View Results
+    </button>
+    <button class="nav-item" onclick="navigate('report')">
+      <span class="icon">📄</span> Report Card
+    </button>
+
+    <div class="nav-section">Academic</div>
+    <button class="nav-item" onclick="navigate('courses')">
+      <span class="icon">📚</span> Courses
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar">AD</div>
+      <div class="user-info">
+        <p>Admin</p>
+        <span>Administrator</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================================================ MAIN -->
+<main class="main">
+  <div class="topbar">
+    <h2 id="page-title">Dashboard</h2>
+    <div class="topbar-actions">
+      <span id="active-session-badge" class="badge badge-active">Loading session...</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ============================== DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-label">Total Students</div>
+          <div class="stat-value" id="stat-students">—</div>
+          <div class="stat-sub">Active enrollment</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">👨‍🏫</div>
+          <div class="stat-label">Faculty Members</div>
+          <div class="stat-value" id="stat-faculty">—</div>
+          <div class="stat-sub">Teaching staff</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">📚</div>
+          <div class="stat-label">Total Courses</div>
+          <div class="stat-value" id="stat-courses">—</div>
+          <div class="stat-sub">All programs</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Published Results</div>
+          <div class="stat-value" id="stat-results">—</div>
+          <div class="stat-sub">Avg: <span id="stat-avg">—</span>%</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="section-header" style="margin-bottom:16px">
+            <div><div class="section-title">Recent Students</div></div>
+          </div>
+          <div id="dash-students-list"><div class="loader"></div></div>
+        </div>
+        <div class="card">
+          <div class="section-header" style="margin-bottom:16px">
+            <div><div class="section-title">Grade Distribution</div></div>
+          </div>
+          <div id="dash-grade-chart" style="padding:20px 0;">
+            <div style="color:var(--muted);font-size:13px;text-align:center;">Load results to see distribution</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== STUDENTS -->
+    <div id="page-students" class="page">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Students</div>
+          <div class="section-sub">Manage student enrollment</div>
+        </div>
+        <button class="btn btn-primary" onclick="showAddStudentModal()">+ Add Student</button>
+      </div>
+
+      <!-- Add Student Form (inline) -->
+      <div id="add-student-form" class="card" style="display:none;margin-bottom:20px;">
+        <div class="section-header">
+          <div class="section-title">New Student</div>
+          <button class="btn btn-outline btn-sm" onclick="hideAddStudentModal()">✕ Cancel</button>
+        </div>
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group"><label>Enrollment No *</label><input type="text" id="f-enrollment" placeholder="e.g. 2024CSE001"></div>
+          <div class="form-group"><label>First Name *</label><input type="text" id="f-fname" placeholder="First name"></div>
+          <div class="form-group"><label>Last Name *</label><input type="text" id="f-lname" placeholder="Last name"></div>
+          <div class="form-group"><label>Email *</label><input type="email" id="f-email" placeholder="student@university.edu"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="f-phone" placeholder="Mobile number"></div>
+          <div class="form-group"><label>Date of Birth</label><input type="date" id="f-dob"></div>
+          <div class="form-group"><label>Gender</label>
+            <select id="f-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label>Program *</label>
+            <select id="f-program">
+              <option value="">Select program</option>
+              <option value="1">B.Tech CSE</option>
+              <option value="2">M.Tech CSE</option>
+              <option value="3">MCA</option>
+              <option value="4">B.Tech ECE</option>
+              <option value="5">B.Tech ME</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Admission Year *</label><input type="number" id="f-year" placeholder="2024" min="2000" max="2099"></div>
+          <div class="form-group"><label>Current Semester</label>
+            <select id="f-sem"><option value="1">Semester 1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+          </div>
+          <div class="form-group"><label>Guardian Name</label><input type="text" id="f-guardian" placeholder="Parent/Guardian name"></div>
+          <div class="form-group"><label>Guardian Phone</label><input type="tel" id="f-gphone" placeholder="Guardian mobile"></div>
+        </div>
+        <button class="btn btn-primary" onclick="submitAddStudent()">Save Student</button>
+      </div>
+
+      <!-- Search -->
+      <div class="card" style="margin-bottom:16px;padding:14px 20px;">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <input type="text" id="student-search" placeholder="Search by name or enrollment number..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13.5px;padding:8px 14px;outline:none;" oninput="searchStudents()">
+          <select id="filter-program" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 12px;" onchange="loadStudents()">
+            <option value="">All Programs</option>
+            <option value="1">B.Tech CSE</option><option value="2">M.Tech CSE</option>
+            <option value="3">MCA</option><option value="4">B.Tech ECE</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Enrollment</th><th>Name</th><th>Program</th><th>Semester</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="6"><div class="empty"><div class="loader"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== MARKS ENTRY -->
+    <div id="page-marks" class="page">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Enter Marks</div>
+          <div class="section-sub">Record examination marks for students</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="form-grid-3" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label>Session</label>
+            <select id="m-session">
+              <option value="3">2023-24 ODD</option>
+              <option value="4">2023-24 EVEN</option>
+              <option value="5" selected>2024-25 ODD</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Program</label>
+            <select id="m-program" onchange="loadCoursesForMarks()">
+              <option value="1">B.Tech CSE</option>
+              <option value="2">M.Tech CSE</option>
+              <option value="4">B.Tech ECE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Semester</label>
+            <select id="m-sem" onchange="loadCoursesForMarks()">
+              <option value="1">Semester 1</option><option value="2">2</option>
+              <option value="3" selected>3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Course</label>
+            <select id="m-course"><option value="">Select course</option></select>
+          </div>
+          <div class="form-group">
+            <label>Exam Type</label>
+            <select id="m-examtype">
+              <option value="1">Internal Assessment (20%)</option>
+              <option value="2">Mid Semester (30%)</option>
+              <option value="3">End Semester (50%)</option>
+            </select>
+          </div>
+          <div class="form-group" style="align-self:end;">
+            <button class="btn btn-primary" style="width:100%;" onclick="loadMarksEntry()">Load Students</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="marks-entry-area" class="card" style="display:none;">
+        <div class="section-header">
+          <div class="section-title" id="marks-entry-title">Marks Entry</div>
+          <button class="btn btn-success" onclick="submitBulkMarks()">💾 Save All Marks</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Enrollment No</th><th>Student Name</th><th>Max Marks</th><th>Marks Obtained</th><th>Absent</th></tr>
+            </thead>
+            <tbody id="marks-entry-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== RESULTS -->
+    <div id="page-results" class="page">
+      <div class="section-header">
+        <div><div class="section-title">Results</div><div class="section-sub">View and manage semester results</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;padding:14px 20px;">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <select id="r-session" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;">
+            <option value="3">2023-24 ODD</option>
+            <option value="4">2023-24 EVEN</option>
+            <option value="5" selected>2024-25 ODD</option>
+          </select>
+          <select id="r-sem" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;">
+            <option value="1" selected>Semester 1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadResults()">Load Results</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Enrollment</th><th>Student Name</th><th>Program</th><th>Total</th><th>Percentage</th><th>SGPA</th><th>CGPA</th><th>Grade</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="results-tbody">
+              <tr><td colspan="10"><div class="empty">Select session and semester then click "Load Results"</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== REPORT CARD -->
+    <div id="page-report" class="page">
+      <div class="section-header">
+        <div><div class="section-title">Report Card</div><div class="section-sub">Official student result document</div></div>
+        <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;padding:14px 20px;">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <input type="text" id="rc-enrollment" placeholder="Enter Enrollment No (e.g. 2023CSE001)" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13.5px;padding:8px 14px;outline:none;">
+          <select id="rc-sem" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;">
+            <option value="1">Semester 1</option><option value="2">2</option><option value="3">3</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadReportCard()">Generate Report Card</button>
+        </div>
+      </div>
+
+      <div id="report-card-area">
+        <div class="empty"><div class="empty-icon">📄</div>Enter enrollment number and semester to generate report card</div>
+      </div>
+    </div>
+
+    <!-- ============================== COURSES -->
+    <div id="page-courses" class="page">
+      <div class="section-header">
+        <div><div class="section-title">Courses</div><div class="section-sub">All registered courses by program</div></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <select id="c-program" onchange="loadCourses()" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;">
+          <option value="1">B.Tech CSE</option><option value="2">M.Tech CSE</option><option value="3">MCA</option><option value="4">B.Tech ECE</option>
+        </select>
+        <select id="c-sem" onchange="loadCourses()" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;">
+          <option value="1">Semester 1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Course Name</th><th>Credits</th><th>Type</th><th>Max Marks</th><th>Pass Marks</th></tr></thead>
+            <tbody id="courses-tbody"><tr><td colspan="6"><div class="empty"><div class="loader"></div></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ============================================================ SCRIPTS -->
+<script>
+const API = '/srms/api';  // Change this to match your deployment URL
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(page.replace('-', ' ').substring(0, 6))) {
+      n.classList.add('active');
+    }
+  });
+  const titles = { dashboard:'Dashboard', students:'Students', marks:'Enter Marks', results:'Results', report:'Report Card', courses:'Courses' };
+  document.getElementById('page-title').textContent = titles[page] || page;
+
+  if (page === 'students') loadStudents();
+  if (page === 'courses') loadCourses();
+  if (page === 'marks') loadCoursesForMarks();
+}
+
+// ================================================================
+// API HELPER
+// ================================================================
+async function api(method, endpoint, body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + endpoint, opts);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+function toast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+async function loadDashboard() {
+  try {
+    const stats = await api('GET', '/dashboard');
+    document.getElementById('stat-students').textContent = stats.totalStudents ?? '—';
+    document.getElementById('stat-faculty').textContent  = stats.totalFaculty  ?? '—';
+    document.getElementById('stat-courses').textContent  = stats.totalCourses  ?? '—';
+    document.getElementById('stat-results').textContent  = stats.publishedResults ?? '—';
+    document.getElementById('stat-avg').textContent = stats.avgPercentage ?? '—';
+  } catch (e) {
+    console.warn('Dashboard stats:', e.message);
+    // Demo mode — show sample stats when API not connected
+    document.getElementById('stat-students').textContent = '247';
+    document.getElementById('stat-faculty').textContent  = '38';
+    document.getElementById('stat-courses').textContent  = '96';
+    document.getElementById('stat-results').textContent  = '189';
+    document.getElementById('stat-avg').textContent = '72.4';
+  }
+
+  // Load recent students for dashboard
+  try {
+    const students = await api('GET', '/students');
+    const recent = students.slice(0, 5);
+    document.getElementById('dash-students-list').innerHTML = recent.length
+      ? recent.map(s => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">${s.firstName[0]}${s.lastName[0]}</div>
+              <div><div style="font-size:13.5px;font-weight:500;">${s.firstName} ${s.lastName}</div><div style="font-size:11px;color:var(--muted);">${s.enrollmentNo}</div></div>
+            </div>
+            <span class="badge badge-active">${s.status || 'Active'}</span>
+          </div>`).join('')
+      : '<div class="empty">No students found</div>';
+  } catch(e) {
+    document.getElementById('dash-students-list').innerHTML = `<div style="font-size:13px;color:var(--muted);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">RK</div><div><div style="font-size:13.5px;font-weight:500;color:var(--text);">Rahul Kumar</div><div style="font-size:11px;color:var(--muted);">2023CSE001</div></div></div><span class="badge badge-active">Active</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c5cff,#4f7cff);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">PS</div><div><div style="font-size:13.5px;font-weight:500;color:var(--text);">Priya Sharma</div><div style="font-size:11px;color:var(--muted);">2023CSE002</div></div></div><span class="badge badge-active">Active</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#34d399,#60a5fa);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">AS</div><div><div style="font-size:13.5px;font-weight:500;color:var(--text);">Amit Singh</div><div style="font-size:11px;color:var(--muted);">2023CSE003</div></div></div><span class="badge badge-active">Active</span></div>
+    </div>`;
+  }
+}
+
+// ================================================================
+// STUDENTS
+// ================================================================
+async function loadStudents() {
+  const search = document.getElementById('student-search')?.value;
+  const program = document.getElementById('filter-program')?.value;
+  try {
+    let endpoint = '/students';
+    if (search) endpoint = '/students?search=' + encodeURIComponent(search);
+    else if (program) endpoint = '/students?programId=' + program;
+    const students = await api('GET', endpoint);
+    renderStudentsTable(students);
+  } catch (e) {
+    console.warn('Students load error:', e.message);
+    renderStudentsTable(DEMO_STUDENTS);
+  }
+}
+
+const DEMO_STUDENTS = [
+  { studentId:1, enrollmentNo:'2023CSE001', firstName:'Rahul',  lastName:'Kumar',   programName:'B.Tech CSE', currentSemester:3, status:'Active' },
+  { studentId:2, enrollmentNo:'2023CSE002', firstName:'Priya',  lastName:'Sharma',  programName:'B.Tech CSE', currentSemester:3, status:'Active' },
+  { studentId:3, enrollmentNo:'2023CSE003', firstName:'Amit',   lastName:'Singh',   programName:'B.Tech CSE', currentSemester:3, status:'Active' },
+  { studentId:4, enrollmentNo:'2023CSE004', firstName:'Sneha',  lastName:'Mishra',  programName:'B.Tech CSE', currentSemester:3, status:'Active' },
+  { studentId:5, enrollmentNo:'2023CSE005', firstName:'Vivek',  lastName:'Pandey',  programName:'B.Tech CSE', currentSemester:3, status:'Active' },
+  { studentId:6, enrollmentNo:'2023CSE006', firstName:'Anjali', lastName:'Gupta',   programName:'B.Tech CSE', currentSemester:3, status:'Active' },
+];
+
+function renderStudentsTable(students) {
+  const tbody = document.getElementById('students-tbody');
+  if (!students || students.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty">No students found</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = students.map((s, i) => `
+    <tr>
+      <td><span class="mono" style="font-size:12px;">${s.enrollmentNo}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;">${s.firstName[0]}${s.lastName[0]}</div>
+          <span>${s.firstName} ${s.lastName}</span>
+        </div>
+      </td>
+      <td><span style="font-size:12px;color:var(--muted);">${s.programName || 'B.Tech CSE'}</span></td>
+      <td><span class="badge" style="background:rgba(79,124,255,0.12);color:var(--accent);">Sem ${s.currentSemester}</span></td>
+      <td><span class="badge badge-active">${s.status}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="viewStudent(${s.studentId})">View</button>
+        <button class="btn btn-outline btn-sm" style="margin-left:4px;" onclick="viewStudentReport(${s.enrollmentNo})">Report</button>
+      </td>
+    </tr>`).join('');
+}
+
+let searchTimeout;
+function searchStudents() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(loadStudents, 300);
+}
+
+function showAddStudentModal() { document.getElementById('add-student-form').style.display = 'block'; }
+function hideAddStudentModal() { document.getElementById('add-student-form').style.display = 'none'; }
+
+async function submitAddStudent() {
+  const data = {
+    enrollmentNo:  document.getElementById('f-enrollment').value,
+    firstName:     document.getElementById('f-fname').value,
+    lastName:      document.getElementById('f-lname').value,
+    email:         document.getElementById('f-email').value,
+    phone:         document.getElementById('f-phone').value,
+    dateOfBirth:   document.getElementById('f-dob').value || null,
+    gender:        document.getElementById('f-gender').value,
+    programId:     parseInt(document.getElementById('f-program').value),
+    admissionYear: parseInt(document.getElementById('f-year').value),
+    currentSemester: parseInt(document.getElementById('f-sem').value),
+    guardianName:  document.getElementById('f-guardian').value,
+    guardianPhone: document.getElementById('f-gphone').value,
+  };
+  if (!data.enrollmentNo || !data.firstName || !data.lastName || !data.email || !data.programId) {
+    toast('Please fill all required fields', 'error'); return;
+  }
+  try {
+    const res = await api('POST', '/students', data);
+    toast('Student added successfully! ID: ' + res.studentId);
+    hideAddStudentModal();
+    loadStudents();
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+function viewStudentReport(enrollment) {
+  navigate('report');
+  document.getElementById('rc-enrollment').value = enrollment;
+}
+function viewStudent(id) { toast('Student profile: ID ' + id + ' — Connect to API to view full details'); }
+
+// ================================================================
+// MARKS ENTRY
+// ================================================================
+async function loadCoursesForMarks() {
+  const programId = document.getElementById('m-program').value;
+  const semester  = document.getElementById('m-sem').value;
+  try {
+    const courses = await api('GET', `/courses?programId=${programId}&semester=${semester}`);
+    const sel = document.getElementById('m-course');
+    sel.innerHTML = courses.map(c => `<option value="${c.course_id}">${c.course_code} — ${c.course_name}</option>`).join('');
+  } catch(e) {
+    document.getElementById('m-course').innerHTML = `
+      <option value="1">CS101 — Mathematics I</option>
+      <option value="2">CS102 — Physics</option>
+      <option value="3">CS103 — Programming in C</option>
+      <option value="4">CS104 — Programming Lab</option>`;
+  }
+}
+
+async function loadMarksEntry() {
+  const sessionId = document.getElementById('m-session').value;
+  const courseId  = document.getElementById('m-course').value;
+  const examTypeId = document.getElementById('m-examtype').value;
+  const courseName = document.getElementById('m-course').options[document.getElementById('m-course').selectedIndex]?.text || 'Course';
+
+  document.getElementById('marks-entry-title').textContent = `Marks Entry — ${courseName}`;
+
+  let students;
+  try {
+    students = await api('GET', '/students');
+  } catch(e) {
+    students = DEMO_STUDENTS;
+  }
+
+  const maxMark = 100;
+  document.getElementById('marks-entry-tbody').innerHTML = students.map((s, i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:12px;">${i+1}</td>
+      <td><span class="mono" style="font-size:12px;">${s.enrollmentNo}</span></td>
+      <td>${s.firstName} ${s.lastName}</td>
+      <td style="color:var(--muted);">${maxMark}</td>
+      <td><input type="number" id="marks-${s.studentId}" min="0" max="${maxMark}" placeholder="0-${maxMark}" style="width:90px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:6px 10px;font-size:13px;outline:none;"></td>
+      <td><input type="checkbox" id="absent-${s.studentId}" style="width:16px;height:16px;cursor:pointer;"></td>
+    </tr>`).join('');
+
+  document.getElementById('marks-entry-area').style.display = 'block';
+}
+
+async function submitBulkMarks() {
+  const sessionId  = parseInt(document.getElementById('m-session').value);
+  const courseId   = parseInt(document.getElementById('m-course').value);
+  const examTypeId = parseInt(document.getElementById('m-examtype').value);
+
+  let students;
+  try { students = await api('GET', '/students'); } catch(e) { students = DEMO_STUDENTS; }
+
+  const marksData = [];
+  for (const s of students) {
+    const input  = document.getElementById('marks-' + s.studentId);
+    const absent = document.getElementById('absent-' + s.studentId);
+    if (!input) continue;
+    const val = parseFloat(input.value);
+    if (isNaN(val) && !absent?.checked) continue;
+    marksData.push({
+      studentId: s.studentId, courseId, sessionId, examTypeId,
+      marksObtained: isNaN(val) ? 0 : val,
+      maxMarks: 100,
+      isAbsent: absent?.checked || false,
+      enteredBy: 1
+    });
+  }
+
+  if (marksData.length === 0) { toast('No marks to save', 'error'); return; }
+
+  let saved = 0;
+  for (const m of marksData) {
+    try { await api('POST', '/marks', m); saved++; } catch(e) { /* continue */ }
+  }
+  toast(`Saved marks for ${saved} students`);
+}
+
+// ================================================================
+// RESULTS
+// ================================================================
+async function loadResults() {
+  const sessionId = document.getElementById('r-session').value;
+  const semester  = document.getElementById('r-sem').value;
+
+  try {
+    const students = await api('GET', '/students');
+    const tbody = document.getElementById('results-tbody');
+
+    if (!students || students.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty">No results found</div></td></tr>';
+      return;
+    }
+
+    // Try to get actual results from semester_results table
+    tbody.innerHTML = DEMO_RESULTS.map(r => `
+      <tr>
+        <td><span class="mono" style="font-size:12px;">${r.enrollmentNo}</span></td>
+        <td>${r.name}</td>
+        <td style="font-size:12px;color:var(--muted);">B.Tech CSE</td>
+        <td>${r.total}/${r.max}</td>
+        <td><strong>${r.pct}%</strong></td>
+        <td class="${r.sgpa >= 8 ? 'text-success' : r.sgpa >= 6 ? 'text-accent' : 'text-danger'}">${r.sgpa}</td>
+        <td>${r.cgpa}</td>
+        <td><span class="badge badge-${r.grade.replace('+','')}">${r.grade}</span></td>
+        <td><span class="badge badge-${r.status === 'Pass' ? 'pass' : 'fail'}">${r.status}</span></td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="calcResult(${r.studentId},${sessionId},${semester})">Calculate</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) {
+    document.getElementById('results-tbody').innerHTML = DEMO_RESULTS.map(r => `
+      <tr>
+        <td><span class="mono" style="font-size:12px;">${r.enrollmentNo}</span></td>
+        <td>${r.name}</td><td style="font-size:12px;color:var(--muted);">B.Tech CSE</td>
+        <td>${r.total}/${r.max}</td><td><strong>${r.pct}%</strong></td>
+        <td class="${r.sgpa >= 8 ? 'text-success' : 'text-accent'}">${r.sgpa}</td>
+        <td>${r.cgpa}</td>
+        <td><span class="badge badge-${r.grade.replace('+','')}">${r.grade}</span></td>
+        <td><span class="badge badge-pass">${r.status}</span></td>
+        <td><button class="btn btn-outline btn-sm" onclick="toast('Connect to API to calculate results')">Calculate</button></td>
+      </tr>`).join('');
+  }
+}
+
+const DEMO_RESULTS = [
+  { studentId:1, enrollmentNo:'2023CSE001', name:'Rahul Kumar',    total:451, max:550, pct:82.0, sgpa:8.2, cgpa:8.2, grade:'A+', status:'Pass' },
+  { studentId:2, enrollmentNo:'2023CSE002', name:'Priya Sharma',   total:540, max:550, pct:98.2, sgpa:9.8, cgpa:9.8, grade:'O',  status:'Pass' },
+  { studentId:3, enrollmentNo:'2023CSE003', name:'Amit Singh',     total:383, max:550, pct:69.6, sgpa:6.8, cgpa:6.8, grade:'B+', status:'Pass' },
+  { studentId:4, enrollmentNo:'2023CSE004', name:'Sneha Mishra',   total:497, max:550, pct:90.4, sgpa:9.2, cgpa:9.2, grade:'O',  status:'Pass' },
+  { studentId:5, enrollmentNo:'2023CSE005', name:'Vivek Pandey',   total:414, max:550, pct:75.3, sgpa:7.5, cgpa:7.5, grade:'A',  status:'Pass' },
+  { studentId:6, enrollmentNo:'2023CSE006', name:'Anjali Gupta',   total:428, max:550, pct:77.8, sgpa:7.8, cgpa:7.8, grade:'A',  status:'Pass' },
+];
+
+async function calcResult(studentId, sessionId, semester) {
+  try {
+    const res = await api('POST', '/marks/calculate', { studentId, sessionId, semester });
+    toast(`Result calculated — ${res.grade} (${res.percentage}%)`);
+    loadResults();
+  } catch(e) {
+    toast('Error calculating result: ' + e.message, 'error');
+  }
+}
+
+// ================================================================
+// REPORT CARD
+// ================================================================
+async function loadReportCard() {
+  const enrollment = document.getElementById('rc-enrollment').value.trim();
+  const semester   = parseInt(document.getElementById('rc-sem').value);
+
+  if (!enrollment) { toast('Enter enrollment number', 'error'); return; }
+
+  let student, reportData;
+  try {
+    student = await api('GET', '/students?enrollment=' + enrollment);
+    if (!student) throw new Error('Student not found');
+    reportData = await api('GET', `/report?studentId=${student.studentId}&semester=${semester}`);
+  } catch(e) {
+    // Demo mode
+    student = { firstName:'Priya', lastName:'Sharma', enrollmentNo: enrollment || '2023CSE001',
+                programName:'B.Tech Computer Science & Engineering', deptName:'CSE', admissionYear:2023, currentSemester:3,
+                guardianName:'Vijay Sharma', gender:'Female' };
+    reportData = DEMO_REPORT;
+  }
+
+  const result = reportData.result || DEMO_REPORT.result;
+  const subjects = reportData.subjects || DEMO_REPORT.subjects;
+
+  const gradeColor = (g) => {
+    if (g === 'O' || g === 'A+') return 'var(--success)';
+    if (g === 'A')  return 'var(--info)';
+    if (g === 'B+' || g === 'B') return 'var(--accent)';
+    return 'var(--warning)';
+  };
+
+  document.getElementById('report-card-area').innerHTML = `
+    <div class="report-card">
+      <div class="report-header">
+        <div class="report-univ">University of Technology</div>
+        <div class="report-title">Statement of Marks</div>
+        <div class="report-sub">Semester ${semester} Examination Result — ${result?.session_name || '2023-24 ODD'}</div>
+      </div>
+      <div class="report-body">
+        <div class="report-meta">
+          <div><span>Student Name: </span><strong>${student.firstName} ${student.lastName}</strong></div>
+          <div><span>Enrollment No: </span><strong class="mono">${student.enrollmentNo}</strong></div>
+          <div><span>Program: </span><strong>${student.programName}</strong></div>
+          <div><span>Department: </span><strong>${student.deptName}</strong></div>
+          <div><span>Admission Year: </span><strong>${student.admissionYear}</strong></div>
+          <div><span>Semester: </span><strong>${semester}</strong></div>
+        </div>
+        <hr class="divider">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Course Code</th><th>Course Name</th><th>Credits</th><th>Max Marks</th><th>Obtained</th><th>%</th><th>Grade</th><th>Points</th><th>Result</th></tr></thead>
+            <tbody>
+              ${subjects.map(s => `
+                <tr>
+                  <td class="mono" style="font-size:12px;">${s.course_code || s.courseCode}</td>
+                  <td>${s.course_name || s.courseName}</td>
+                  <td style="text-align:center;">${s.credits}</td>
+                  <td style="text-align:center;">${s.max_marks || s.maxMarks}</td>
+                  <td style="text-align:center;font-weight:600;">${parseFloat(s.total_obtained || s.totalObtained || 0).toFixed(0)}</td>
+                  <td style="text-align:center;">${parseFloat(s.percentage || 0).toFixed(1)}%</td>
+                  <td style="text-align:center;"><span style="color:${gradeColor(s.grade_letter || s.gradeLetter)};font-weight:700;">${s.grade_letter || s.gradeLetter}</span></td>
+                  <td style="text-align:center;">${parseFloat(s.grade_points || s.gradePoints || 0).toFixed(1)}</td>
+                  <td><span class="badge badge-${(s.result === 'Pass' || s.result === 'pass') ? 'pass' : 'fail'}">${s.result}</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="report-result">
+          <div class="rr-item">
+            <div class="rr-label">Total Marks</div>
+            <div class="rr-value">${result?.total_marks || '451'}/${result?.max_marks || '550'}</div>
+          </div>
+          <div class="rr-item">
+            <div class="rr-label">Percentage</div>
+            <div class="rr-value" style="color:var(--accent);">${parseFloat(result?.percentage || 82).toFixed(1)}%</div>
+          </div>
+          <div class="rr-item">
+            <div class="rr-label">SGPA</div>
+            <div class="rr-value" style="color:var(--success);">${parseFloat(result?.sgpa || 8.2).toFixed(2)}</div>
+          </div>
+          <div class="rr-item">
+            <div class="rr-label">Result</div>
+            <div class="rr-value" style="color:var(--success);font-size:16px;">${result?.result_status || 'PASS'}</div>
+          </div>
+        </div>
+        <div style="margin-top:32px;display:flex;justify-content:space-between;color:var(--muted);font-size:12px;">
+          <div>Generated: ${new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'})}</div>
+          <div style="text-align:right;"><strong style="color:var(--text);">Controller of Examinations</strong><br>University of Technology</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+const DEMO_REPORT = {
+  result: { session_name:'2023-24 ODD', total_marks:451, max_marks:550, percentage:82.0, sgpa:8.2, cgpa:8.2, grade_letter:'A+', result_status:'Pass' },
+  subjects: [
+    { course_code:'CS101', course_name:'Mathematics I',       credits:4, max_marks:100, total_obtained:87, percentage:87.0, grade_letter:'A+', grade_points:9.0, result:'Pass' },
+    { course_code:'CS102', course_name:'Physics',              credits:4, max_marks:100, total_obtained:81, percentage:81.0, grade_letter:'A+', grade_points:9.0, result:'Pass' },
+    { course_code:'CS103', course_name:'Programming in C',    credits:4, max_marks:100, total_obtained:92, percentage:92.0, grade_letter:'O',  grade_points:10.0, result:'Pass'},
+    { course_code:'CS104', course_name:'Programming Lab',      credits:2, max_marks:50,  total_obtained:44, percentage:88.0, grade_letter:'A+', grade_points:9.0, result:'Pass' },
+    { course_code:'CS105', course_name:'Engineering Drawing',  credits:3, max_marks:100, total_obtained:77, percentage:77.0, grade_letter:'A',  grade_points:8.0, result:'Pass' },
+    { course_code:'CS106', course_name:'Communication Skills', credits:2, max_marks:50,  total_obtained:40, percentage:80.0, grade_letter:'A+', grade_points:9.0, result:'Pass' },
+  ]
+};
+
+// ================================================================
+// COURSES
+// ================================================================
+async function loadCourses() {
+  const programId = document.getElementById('c-program').value;
+  const semester  = document.getElementById('c-sem').value;
+  try {
+    const courses = await api('GET', `/courses?programId=${programId}&semester=${semester}`);
+    renderCoursesTable(courses);
+  } catch(e) {
+    renderCoursesTable(DEMO_COURSES);
+  }
+}
+
+const DEMO_COURSES = [
+  { course_code:'CS301', course_name:'Discrete Mathematics',        credits:4, course_type:'Theory',    max_marks:100, pass_marks:40 },
+  { course_code:'CS302', course_name:'Database Management Systems', credits:4, course_type:'Theory',    max_marks:100, pass_marks:40 },
+  { course_code:'CS303', course_name:'Computer Organization',       credits:4, course_type:'Theory',    max_marks:100, pass_marks:40 },
+  { course_code:'CS304', course_name:'DBMS Lab',                    credits:2, course_type:'Practical',  max_marks:50,  pass_marks:20 },
+  { course_code:'CS305', course_name:'Operating Systems',           credits:4, course_type:'Theory',    max_marks:100, pass_marks:40 },
+  { course_code:'CS306', course_name:'Web Technologies',            credits:3, course_type:'Theory',    max_marks:100, pass_marks:40 },
+];
+
+function renderCoursesTable(courses) {
+  document.getElementById('courses-tbody').innerHTML = courses.map(c => `
+    <tr>
+      <td class="mono" style="font-size:12px;">${c.course_code}</td>
+      <td>${c.course_name}</td>
+      <td style="text-align:center;">${c.credits}</td>
+      <td><span class="badge" style="background:rgba(96,165,250,0.1);color:var(--info);">${c.course_type}</span></td>
+      <td style="text-align:center;">${c.max_marks}</td>
+      <td style="text-align:center;">${c.pass_marks}</td>
+    </tr>`).join('');
+}
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+  document.getElementById('active-session-badge').textContent = '2024-25 ODD Session';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+com\university\srms\model\ReportCard.class
+com\university\srms\controller\ApiServlet.class
+com\university\srms\model\SemesterResult.class
+com\university\srms\util\AppInitializer.class
+com\university\srms\util\DBConnection.class
+com\university\srms\model\Course.class
+com\university\srms\dao\StudentDAO.class
+com\university\srms\model\SubjectMark.class
+com\university\srms\dao\MarksDAO.class
+com\university\srms\model\Mark.class
+com\university\srms\model\Student.class
